@@ -1,3 +1,4 @@
+#region Constants
 const int width = 50;
 const int height = 20;
 
@@ -30,8 +31,9 @@ const ConsoleColor WallColor        = ConsoleColor.DarkGray;
 const ConsoleColor CorridorColor    = ConsoleColor.DarkBlue;
 const ConsoleColor PlayerColor      = ConsoleColor.Yellow;
 const ConsoleColor ExitColor        = ConsoleColor.Green;
+#endregion 
 
-﻿var grid = new CellType[width, height];
+var grid = new CellType[width, height];
 
 var playerX = 0;
 var playerY = 0;
@@ -55,7 +57,7 @@ while (mode == State.Playing)
         case ConsoleKey.D or ConsoleKey.RightArrow: nx2++; break;
         case ConsoleKey.Escape: mode = State.Canceled; break;
     }
-    if (nx2 >= 0 && nx2 < width && ny2 >= 0 && ny2 < height && grid[nx2, ny2] != CellType.Wall)
+    if (InBound(nx2, width) && InBound(ny2, height) && grid[nx2, ny2] != CellType.Wall)
     {
         if (grid[nx2, ny2] == CellType.Exit) mode = State.Won;
 
@@ -73,7 +75,7 @@ DrawTextXY(0, offsetY + height + marginYMessage + messageHeight, sPressKey);
 Console.CursorVisible = true;
 Console.ReadKey(true);
 
-
+#region Functions
 
 void DrawTextXY(int x, int y, string text, ConsoleColor? color = null)
 {
@@ -122,6 +124,8 @@ void DrawScreen()
     DrawTextXY(0, offsetY + height, sInstructions, InstructionColor);
 }
 
+bool InBound(int val, int max) => val >= 0 && val < max;
+
 void GenerateMaze(CellType[,] grid, int playerStartX, int playerStartY)
 {
     for (var y = 0; y < height; y++)
@@ -130,7 +134,12 @@ void GenerateMaze(CellType[,] grid, int playerStartX, int playerStartY)
 
     int[] dx = [ 0, 1, 0, -1 ];
     int[] dy = [ -1, 0, 1, 0 ];
-    int[] order = { 0, 1, 2, 3 };
+    int[][] orders = [
+        [ 0, 1, 2, 3 ], [ 0, 1, 3, 2 ], [ 0, 2, 1, 3 ], [ 0, 2, 3, 1 ], [ 0, 3, 1, 2 ], [ 0, 3, 2, 1 ],
+        [ 1, 0, 2, 3 ], [ 1, 0, 3, 2 ], [ 1, 2, 0, 3 ], [ 1, 2, 3, 0 ], [ 1, 3, 0, 2 ], [ 1, 3, 2, 0 ],
+        [ 2, 0, 1, 3 ], [ 2, 0, 3, 1 ], [ 2, 1, 0, 3 ], [ 2, 1, 3, 0 ], [ 2, 3, 0, 1 ], [ 2, 3, 1, 0 ],
+        [ 3, 0, 1, 2 ], [ 3, 0, 2, 1 ], [ 3, 1, 0, 2 ], [ 3, 1, 2, 0 ], [ 3, 2, 0, 1 ], [ 3, 2, 1, 0 ]
+    ];
     var rng = new Random();
 
     GenerateMazeRec(playerStartX, playerStartY);
@@ -144,8 +153,7 @@ void GenerateMaze(CellType[,] grid, int playerStartX, int playerStartY)
     void GenerateMazeRec(int x, int y)
     {
         grid[x, y] = CellType.Corridor;
-        rng.Shuffle(order);
-        foreach (var dir in order)
+        foreach (var dir in orders[rng.Next(orders.Length)])
         {
             if( InMaze(x, dx[dir], width , out var nx) && 
                 InMaze(y, dy[dir], height, out var ny) && 
@@ -155,14 +163,13 @@ void GenerateMaze(CellType[,] grid, int playerStartX, int playerStartY)
                 GenerateMazeRec(nx, ny);
             }
         }
-        bool InMaze(int val, int delta, int max, out int next)
-        {
-            next = val + delta * 2;
-            return next >= 0 && next < max;
-        }
+        bool InMaze(int val, int delta, int max, out int next) => 
+            InBound(next = val + delta * 2, max);
     }
 }
+#endregion
 
+#region Enums
 enum State
 {
     Playing,
@@ -176,3 +183,4 @@ enum CellType
     Player = 2,
     Exit = 3
 }
+#endregion
