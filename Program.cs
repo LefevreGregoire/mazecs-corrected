@@ -15,13 +15,6 @@ const string sHeader = """
     ╚══════════════════════════════════════════════════╝
     """;
 const string sInstructions = "  [Z/↑] Haut   [S/↓] Bas   [Q/←] Gauche   [D/→] Droite   [Échap] Quitter";
-const string sWin = """
-    ╔════════════════════════════════╗
-    ║   🎉  FÉLICITATIONS !  🎉      ║
-    ║   Vous avez trouvé la sortie ! ║
-    ╚════════════════════════════════╝
-""";
-const string sCanceled = "\n  Partie abandonnée. À bientôt !";
 const string sPressKey = "  Appuyez sur une key pour quitter...";
 
 const ConsoleColor SuccessColor     = ConsoleColor.Green;
@@ -39,86 +32,42 @@ var player = new Vec2d(0, 0);
 var mode = State.Playing;
 
 GenerateMaze(grid, player.X, player.Y);
-DrawScreen();
+
+var screen = new ConsoleScreen(grid, width, height, offsetX, offsetY,
+    marginYMessage, messageHeight,
+    WallColor, CorridorColor, PlayerColor, ExitColor,
+    InfoColor, InstructionColor, SuccessColor, DangerColor,
+    sHeader, sInstructions, sPressKey);
+
+var controller = new KeyboardController();
+
+screen.Draw();
 
 while (mode == State.Playing)
 {
-    var key = Console.ReadKey(true).Key;
+    var (movement, quit) = controller.ReadInput();
 
-    var nextPos = player;
-
-    switch (key)
+    if (quit)
     {
-        case ConsoleKey.Z or ConsoleKey.UpArrow:    nextPos = player.Add(0, -1); break;
-        case ConsoleKey.S or ConsoleKey.DownArrow:  nextPos = player.Add(0, 1); break;
-        case ConsoleKey.Q or ConsoleKey.LeftArrow:  nextPos = player.Add(-1, 0); break;
-        case ConsoleKey.D or ConsoleKey.RightArrow: nextPos = player.Add(1, 0); break;
-        case ConsoleKey.Escape: mode = State.Canceled; break;
+        mode = State.Canceled;
+        break;
     }
+
+    var nextPos = player.Add(movement.X, movement.Y);
+
     if (nextPos.IsInBound(width, height) && grid[nextPos.X, nextPos.Y] != CellType.Wall)
     {
         if (grid[nextPos.X, nextPos.Y] == CellType.Exit) mode = State.Won;
 
-        UpdateCell(player.X      , player.Y      , CellType.Corridor);
-        UpdateCell((player = nextPos).X, player.Y, CellType.Player  );
+        screen.UpdateCell(player.X, player.Y, CellType.Corridor);
+        screen.UpdateCell(nextPos.X, nextPos.Y, CellType.Player);
+        player = nextPos;
     }
 }
 
-DrawTextColorXY(0, offsetY + height + marginYMessage,
-    mode == State.Won 
-    ? (sWin, SuccessColor) 
-    : (sCanceled, DangerColor)
-);
-DrawTextXY(0, offsetY + height + marginYMessage + messageHeight, sPressKey);
+screen.DrawEndScreen(mode == State.Won);
 Console.CursorVisible = true;
 Console.ReadKey(true);
-
-void DrawTextXY(int x, int y, string text, ConsoleColor? color = null)
-{
-    Console.SetCursorPosition(x, y);
-    if(color.HasValue)
-    {
-        Console.ForegroundColor = color.Value;
-    }
-    Console.Write(text);
-    Console.ResetColor();
-}
-
-void DrawTextColorXY(int x, int y, (string text, ConsoleColor color) info) =>
-    DrawTextXY(x, y, info.text, info.color);
-
-void DrawCell(int cx, int cy) => DrawTextColorXY(
-    offsetX + cx, 
-    offsetY + cy,
-    grid[cx, cy] switch
-    {
-        CellType.Wall   => ("█", WallColor),
-        CellType.Player => ("@", PlayerColor),
-        CellType.Exit   => ("★", ExitColor),
-        _               => ("·", CorridorColor)
-    });
-
-void UpdateCell(int cx, int cy, CellType type)
-{
-    grid[cx, cy] = type;
-    DrawCell(cx, cy);
-}
-
-void DrawScreen()
-{
-    Console.Clear();
-    Console.CursorVisible = false;
-
-    DrawTextXY(0, 0, sHeader, InfoColor);
-    for (var y = 0; y < height; y++)
-    {
-        for (var x = 0; x < width; x++)
-        {
-            DrawCell(x, y);
-        }
-    }
-    DrawTextXY(0, offsetY + height, sInstructions, InstructionColor);
-}
 
 bool InBound(int val, int max) => val >= 0 && val < max;
 

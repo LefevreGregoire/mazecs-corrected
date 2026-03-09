@@ -2,6 +2,8 @@ namespace Epsi.MazeCs;
 
 public readonly record struct Vec2d(int X, int Y)
 {
+    public static Vec2d Zero => new(0, 0);
+
     public bool IsXInBound(int max) => X >= 0 && X < max;
 
     public bool IsYInBound(int max) => Y >= 0 && Y < max;
