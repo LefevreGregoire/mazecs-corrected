@@ -68,6 +68,18 @@ public class ConsoleScreen
     public void UpdateCell(int cx, int cy, CellType type)
     {
         grid[cx, cy] = type;
+        if (type == CellType.Start)
+        {
+            DrawTextXY(offsetX + cx, offsetY + cy, "@", playerColor);
+        }
+        else
+        {
+            DrawCell(cx, cy);
+        }
+    }
+
+    public void DrawMazeCell(int cx, int cy, CellType type)
+    {
         DrawCell(cx, cy);
     }
 
@@ -105,7 +117,7 @@ public class ConsoleScreen
         var (symbol, color) = grid[cx, cy] switch
         {
             CellType.Wall => ("█", wallColor),
-            CellType.Player => ("@", playerColor),
+            CellType.Start => ("@", playerColor),
             CellType.Exit => ("★", exitColor),
             _ => ("·", corridorColor)
         };
