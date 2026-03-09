@@ -1,4 +1,5 @@
-#region Constants
+using Epsi.MazeCs;
+
 const int width = 50;
 const int height = 20;
 
@@ -31,38 +32,35 @@ const ConsoleColor WallColor        = ConsoleColor.DarkGray;
 const ConsoleColor CorridorColor    = ConsoleColor.DarkBlue;
 const ConsoleColor PlayerColor      = ConsoleColor.Yellow;
 const ConsoleColor ExitColor        = ConsoleColor.Green;
-#endregion 
 
 var grid = new CellType[width, height];
 
-var playerX = 0;
-var playerY = 0;
+var player = new Vec2d(0, 0);
 var mode = State.Playing;
 
-GenerateMaze(grid, playerX, playerY);
+GenerateMaze(grid, player.X, player.Y);
 DrawScreen();
 
 while (mode == State.Playing)
 {
     var key = Console.ReadKey(true).Key;
 
-    var nx2 = playerX;
-    var ny2 = playerY;
+    var nextPos = player;
 
     switch (key)
     {
-        case ConsoleKey.Z or ConsoleKey.UpArrow:    ny2--; break;
-        case ConsoleKey.S or ConsoleKey.DownArrow:  ny2++; break;
-        case ConsoleKey.Q or ConsoleKey.LeftArrow:  nx2--; break;
-        case ConsoleKey.D or ConsoleKey.RightArrow: nx2++; break;
+        case ConsoleKey.Z or ConsoleKey.UpArrow:    nextPos = player.Add(0, -1); break;
+        case ConsoleKey.S or ConsoleKey.DownArrow:  nextPos = player.Add(0, 1); break;
+        case ConsoleKey.Q or ConsoleKey.LeftArrow:  nextPos = player.Add(-1, 0); break;
+        case ConsoleKey.D or ConsoleKey.RightArrow: nextPos = player.Add(1, 0); break;
         case ConsoleKey.Escape: mode = State.Canceled; break;
     }
-    if (InBound(nx2, width) && InBound(ny2, height) && grid[nx2, ny2] != CellType.Wall)
+    if (nextPos.IsInBound(width, height) && grid[nextPos.X, nextPos.Y] != CellType.Wall)
     {
-        if (grid[nx2, ny2] == CellType.Exit) mode = State.Won;
+        if (grid[nextPos.X, nextPos.Y] == CellType.Exit) mode = State.Won;
 
-        UpdateCell(playerX      , playerY      , CellType.Corridor);
-        UpdateCell(playerX = nx2, playerY = ny2, CellType.Player  );
+        UpdateCell(player.X      , player.Y      , CellType.Corridor);
+        UpdateCell((player = nextPos).X, player.Y, CellType.Player  );
     }
 }
 
@@ -74,8 +72,6 @@ DrawTextColorXY(0, offsetY + height + marginYMessage,
 DrawTextXY(0, offsetY + height + marginYMessage + messageHeight, sPressKey);
 Console.CursorVisible = true;
 Console.ReadKey(true);
-
-#region Functions
 
 void DrawTextXY(int x, int y, string text, ConsoleColor? color = null)
 {
@@ -167,20 +163,3 @@ void GenerateMaze(CellType[,] grid, int playerStartX, int playerStartY)
             InBound(next = val + delta * 2, max);
     }
 }
-#endregion
-
-#region Enums
-enum State
-{
-    Playing,
-    Won,
-    Canceled
-}
-enum CellType
-{
-    Corridor = 0,
-    Wall = 1,
-    Player = 2,
-    Exit = 3
-}
-#endregion
