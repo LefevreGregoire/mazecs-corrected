@@ -38,7 +38,7 @@ var screen = new ConsoleScreen(maze.Grid, width, height, offsetX, offsetY,
 maze.Draw(screen);
 
 var player = new Player(maze, screen);
-var controller = new KeyboardController();
+IController controller = new KeyboardController();
 
 var mode = State.Playing;
 

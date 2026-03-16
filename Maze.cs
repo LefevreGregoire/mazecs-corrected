@@ -7,9 +7,9 @@ public class Maze
     public int Height { get; }
     public CellType[,] Grid => grid;
 
-    public Maze(MazeGen mazeGen, int width, int height)
+    public Maze(IMazeGenerator mazeGenerator, int width, int height)
     {
-        this.grid = mazeGen.Generate();
+        this.grid = mazeGenerator.Generate();
         this.Width = width;
         this.Height = height;
     }

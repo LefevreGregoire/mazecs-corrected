@@ -1,6 +1,6 @@
 namespace Epsi.MazeCs;
 
-public class MazeGen
+public class MazeGen : IMazeGenerator
 {
     private readonly int width;
     private readonly int height;

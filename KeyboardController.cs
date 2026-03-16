@@ -1,6 +1,6 @@
 namespace Epsi.MazeCs;
 
-public class KeyboardController
+public class KeyboardController : IController
 {
     public (Vec2d movement, bool quit) ReadInput()
     {
