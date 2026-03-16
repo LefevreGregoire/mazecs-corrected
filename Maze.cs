@@ -37,7 +37,7 @@ public class Maze
 
     public bool IsWall(Vec2d pos) => IsWall(pos.X, pos.Y);
 
-    public void Draw(ConsoleScreen screen)
+    public void Draw(IGridDisplay screen)
     {
         screen.Draw();
         for (var y = 0; y < Height; y++)

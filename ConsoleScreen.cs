@@ -1,6 +1,6 @@
 namespace Epsi.MazeCs;
 
-public class ConsoleScreen
+public class ConsoleScreen : IGridDisplay
 {
     private readonly CellType[,] grid;
     private readonly int width;

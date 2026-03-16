@@ -4,11 +4,11 @@ public class Player
 {
     private Vec2d position;
     private readonly Maze maze;
-    private readonly ConsoleScreen screen;
+    private readonly IGridDisplay screen;
 
     public Vec2d Position => position;
 
-    public Player(Maze maze, ConsoleScreen screen)
+    public Player(Maze maze, IGridDisplay screen)
     {
         this.maze = maze;
         this.screen = screen;
