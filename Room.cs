@@ -4,11 +4,13 @@ public class Room : Cell
 {
     public bool IsStart { get; set; }
     public bool IsExit { get; set; }
+    public List<ICollectable> Collectables { get; private set; }
 
     public Room()
     {
         IsStart = false;
         IsExit = false;
+        Collectables = new List<ICollectable>();
     }
 
     public override string GetSymbol()

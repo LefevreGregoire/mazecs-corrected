@@ -4,11 +4,13 @@ public class MazeGen : IMazeGenerator
 {
     private readonly int width;
     private readonly int height;
+    private readonly double coinProbability;
 
-    public MazeGen(int width, int height)
+    public MazeGen(int width, int height, double coinProbability = 0.3)
     {
         this.width = width;
         this.height = height;
+        this.coinProbability = Math.Clamp(coinProbability, 0.0, 1.0);
     }
 
     public Cell[,] Generate()
@@ -39,6 +41,13 @@ public class MazeGen : IMazeGenerator
         
         var exitRoom = (Room)grid[outX, outY];
         exitRoom.IsExit = true;
+
+        // Add coins to rooms based on probability
+        for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+                if (grid[x, y] is Room room && !room.IsStart && !room.IsExit)
+                    if (rng.NextDouble() < coinProbability)
+                        room.Collectables.Add(new Coin());
 
         return grid;
 

@@ -26,7 +26,7 @@ const ConsoleColor CorridorColor    = ConsoleColor.DarkBlue;
 const ConsoleColor PlayerColor      = ConsoleColor.Yellow;
 const ConsoleColor ExitColor        = ConsoleColor.Green;
 
-var mazeGen = new MazeGen(width, height);
+var mazeGen = new MazeGen(width, height, coinProbability: 0.3);
 var maze = new Maze(mazeGen, width, height);
 
 var screen = new ConsoleScreen(maze.Grid, width, height, offsetX, offsetY,
