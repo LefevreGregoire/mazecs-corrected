@@ -26,7 +26,7 @@ public class Player
         if (maze.IsWall(nextPos))
             return false;
 
-        screen.UpdateCell(position.X, position.Y, CellType.Corridor);
+        screen.UpdateCell(position.X, position.Y, new Room());
         position = nextPos;
         Draw();
 
@@ -35,11 +35,13 @@ public class Player
 
     public bool IsAtExit()
     {
-        return maze.GetCell(position.X, position.Y) == CellType.Exit;
+        var cell = maze.GetCell(position.X, position.Y);
+        return cell is Room room && room.IsExit;
     }
 
     private void Draw()
     {
-        screen.UpdateCell(position.X, position.Y, CellType.Start);
+        var startRoom = new Room { IsStart = true };
+        screen.UpdateCell(position.X, position.Y, startRoom);
     }
 }

@@ -2,7 +2,7 @@ namespace Epsi.MazeCs;
 
 public class ConsoleScreen : IGridDisplay
 {
-    private readonly CellType[,] grid;
+    private readonly Cell[,] grid;
     private readonly int width;
     private readonly int height;
     private readonly int offsetX;
@@ -23,7 +23,7 @@ public class ConsoleScreen : IGridDisplay
     private readonly string instructions;
     private readonly string pressKeyMessage;
 
-    public ConsoleScreen(CellType[,] grid, int width, int height, int offsetX, int offsetY,
+    public ConsoleScreen(Cell[,] grid, int width, int height, int offsetX, int offsetY,
         int marginYMessage, int messageHeight,
         ConsoleColor wallColor, ConsoleColor corridorColor, ConsoleColor playerColor, ConsoleColor exitColor,
         ConsoleColor infoColor, ConsoleColor instructionColor, ConsoleColor successColor, ConsoleColor dangerColor,
@@ -65,10 +65,10 @@ public class ConsoleScreen : IGridDisplay
         DrawTextXY(0, offsetY + height, instructions, instructionColor);
     }
 
-    public void UpdateCell(int cx, int cy, CellType type)
+    public void UpdateCell(int cx, int cy, Cell cell)
     {
-        grid[cx, cy] = type;
-        if (type == CellType.Start)
+        grid[cx, cy] = cell;
+        if (cell is Room room && room.IsStart)
         {
             DrawTextXY(offsetX + cx, offsetY + cy, "@", playerColor);
         }
@@ -78,7 +78,7 @@ public class ConsoleScreen : IGridDisplay
         }
     }
 
-    public void DrawMazeCell(int cx, int cy, CellType type)
+    public void DrawMazeCell(int cx, int cy, Cell cell)
     {
         DrawCell(cx, cy);
     }
@@ -114,13 +114,9 @@ public class ConsoleScreen : IGridDisplay
 
     private void DrawCell(int cx, int cy)
     {
-        var (symbol, color) = grid[cx, cy] switch
-        {
-            CellType.Wall => ("█", wallColor),
-            CellType.Start => ("@", playerColor),
-            CellType.Exit => ("★", exitColor),
-            _ => ("·", corridorColor)
-        };
+        var cell = grid[cx, cy];
+        var symbol = cell.GetSymbol();
+        var color = cell.GetColor(wallColor, corridorColor, playerColor, exitColor);
         DrawTextXY(offsetX + cx, offsetY + cy, symbol, color);
     }
 

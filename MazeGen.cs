@@ -11,13 +11,13 @@ public class MazeGen : IMazeGenerator
         this.height = height;
     }
 
-    public CellType[,] Generate()
+    public Cell[,] Generate()
     {
-        var grid = new CellType[width, height];
+        var grid = new Cell[width, height];
 
         for (var y = 0; y < height; y++)
             for (var x = 0; x < width; x++)
-                grid[x, y] = CellType.Wall;
+                grid[x, y] = new Wall();
 
         int[] dx = [0, 1, 0, -1];
         int[] dy = [-1, 0, 1, 0];
@@ -34,21 +34,26 @@ public class MazeGen : IMazeGenerator
         var outX = (width - 1) & ~1;
         var outY = (height - 1) & ~1;
 
-        grid[0, 0] = CellType.Start;
-        grid[outX, outY] = CellType.Exit;
+        var startRoom = (Room)grid[0, 0];
+        startRoom.IsStart = true;
+        
+        var exitRoom = (Room)grid[outX, outY];
+        exitRoom.IsExit = true;
 
         return grid;
 
-        void GenerateMazeRec(CellType[,] g, int x, int y)
+        void GenerateMazeRec(Cell[,] g, int x, int y)
         {
-            g[x, y] = CellType.Corridor;
+            var room = new Room();
+            g[x, y] = room;
+            
             foreach (var dir in orders[rng.Next(orders.Length)])
             {
                 if (InMaze(x, dx[dir], width, out var nx) &&
                     InMaze(y, dy[dir], height, out var ny) &&
-                    g[nx, ny] == CellType.Wall)
+                    g[nx, ny] is Wall)
                 {
-                    g[(x + nx) / 2, (y + ny) / 2] = CellType.Corridor;
+                    g[(x + nx) / 2, (y + ny) / 2] = new Room();
                     GenerateMazeRec(g, nx, ny);
                 }
             }

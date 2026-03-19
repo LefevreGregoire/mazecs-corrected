@@ -2,10 +2,10 @@ namespace Epsi.MazeCs;
 
 public class Maze
 {
-    private readonly CellType[,] grid;
+    private readonly Cell[,] grid;
     public int Width { get; }
     public int Height { get; }
-    public CellType[,] Grid => grid;
+    public Cell[,] Grid => grid;
 
     public Maze(IMazeGenerator mazeGenerator, int width, int height)
     {
@@ -14,25 +14,25 @@ public class Maze
         this.Height = height;
     }
 
-    public CellType GetCell(int x, int y)
+    public Cell GetCell(int x, int y)
     {
         if (!new Vec2d(x, y).IsInBound(Width, Height))
             throw new ArgumentOutOfRangeException($"Position ({x}, {y}) est hors des limites ({Width}, {Height})");
         return grid[x, y];
     }
 
-    public void SetCell(int x, int y, CellType type)
+    public void SetCell(int x, int y, Cell cell)
     {
         if (!new Vec2d(x, y).IsInBound(Width, Height))
             throw new ArgumentOutOfRangeException($"Position ({x}, {y}) est hors des limites ({Width}, {Height})");
-        grid[x, y] = type;
+        grid[x, y] = cell;
     }
 
     public bool IsWall(int x, int y)
     {
         if (!new Vec2d(x, y).IsInBound(Width, Height))
             return true;
-        return grid[x, y] == CellType.Wall;
+        return grid[x, y].IsWall;
     }
 
     public bool IsWall(Vec2d pos) => IsWall(pos.X, pos.Y);
@@ -44,9 +44,10 @@ public class Maze
         {
             for (var x = 0; x < Width; x++)
             {
-                if (grid[x, y] != CellType.Start)
+                var cell = grid[x, y];
+                if (cell is not Room room || !room.IsStart)
                 {
-                    screen.DrawMazeCell(x, y, grid[x, y]);
+                    screen.DrawMazeCell(x, y, cell);
                 }
             }
         }
