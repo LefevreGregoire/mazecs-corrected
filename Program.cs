@@ -14,7 +14,7 @@ const string sHeader = """
     ║          🏃 LABYRINTHE ASCII  C#  🏃             ║
     ╚══════════════════════════════════════════════════╝
     """;
-const string sInstructions = "  [Z/↑] Haut   [S/↓] Bas   [Q/←] Gauche   [D/→] Droite   [Échap] Quitter";
+const string sInstructions = "  [Z/↑] Haut   [S/↓] Bas   [Q/←] Gauche   [D/→] Droite   [E] Ramasser   [Échap] Quitter";
 const string sPressKey = "  Appuyez sur une key pour quitter...";
 
 const ConsoleColor SuccessColor     = ConsoleColor.Green;
@@ -26,7 +26,7 @@ const ConsoleColor CorridorColor    = ConsoleColor.DarkBlue;
 const ConsoleColor PlayerColor      = ConsoleColor.Yellow;
 const ConsoleColor ExitColor        = ConsoleColor.Green;
 
-var mazeGen = new MazeGen(width, height, coinProbability: 0.3);
+var mazeGen = new MazeGen(width, height, coinProbability: 0.3, doorProbability: 0.1);
 var maze = new Maze(mazeGen, width, height);
 
 var screen = new ConsoleScreen(maze.Grid, width, height, offsetX, offsetY,
@@ -40,16 +40,38 @@ maze.Draw(screen);
 var player = new Player(maze, screen);
 IController controller = new KeyboardController();
 
+// Subscribe to player events for user feedback
+player.PointsChanged += (sender, args) =>
+{
+    Console.SetCursorPosition(0, offsetY + height + marginYMessage + 1);
+    Console.ForegroundColor = SuccessColor;
+    Console.Write($"Points: {args.NewPoints} ");
+    Console.ResetColor();
+};
+
+player.InventoryChanged += (sender, args) =>
+{
+    Console.SetCursorPosition(0, offsetY + height + marginYMessage + 2);
+    Console.ForegroundColor = InfoColor;
+    Console.Write($"Inventory: {args.Inventory.Count} item(s) ");
+    Console.ResetColor();
+};
+
 var mode = State.Playing;
 
 while (mode == State.Playing)
 {
-    var (movement, quit) = controller.ReadInput();
+    var (movement, quit, pickup) = controller.ReadInput();
 
     if (quit)
     {
         mode = State.Canceled;
         break;
+    }
+
+    if (pickup)
+    {
+        player.Pickup();
     }
 
     if (player.TryMove(movement))
