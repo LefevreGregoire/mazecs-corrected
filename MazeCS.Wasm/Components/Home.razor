@@ -1,0 +1,52 @@
+@page "/"
+@using Epsi.MazeCs
+
+<PageTitle>MazeCS Home</PageTitle>
+
+<div class="home-container">
+    <h1>Labyrinthe</h1>
+    
+    <div class="info-panel">
+        <p>Score: @Player?.Points ?? 0</p>
+        <p>Inventaire: @Player?.Inventory.Count ?? 0</p>
+    </div>
+
+    @if (Maze is not null && Player is not null)
+    {
+        <WebMaze Maze="Maze" Player="Player" />
+    }
+</div>
+
+@code {
+    public required Maze Maze { get; set; }
+    public required Player Player { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Initialize maze with generator
+        var mazeGen = new MazeGen(50, 20, coinProbability: 0.3, doorProbability: 0.1);
+        Maze = new Maze(mazeGen, 50, 20);
+        
+        // Create a dummy screen display for Player
+        var dummyScreen = new DummyGridDisplay();
+        
+        // Initialize player with maze and dummy screen
+        Player = new Player(maze: Maze, screen: dummyScreen);
+        
+        // Subscribe to inventory changes
+        Player.InventoryChanged += (sender, args) => StateHasChanged();
+        
+        // Subscribe to score changes
+        Player.PointsChanged += (sender, args) => StateHasChanged();
+    }
+
+    /// <summary>
+    /// Dummy implementation of IGridDisplay for Blazor environment
+    /// </summary>
+    private class DummyGridDisplay : IGridDisplay
+    {
+        public void Draw() { }
+        public void DrawMazeCell(int x, int y, Cell cell) { }
+        public void UpdateCell(int x, int y, Cell cell) { }
+    }
+}

@@ -1,0 +1,228 @@
+@using Epsi.MazeCs
+@implements IGridDisplay
+@implements IController
+
+<div class="maze-container" @onkeydown="HandleKeyDown" tabindex="0">
+    <div class="maze-grid">
+        @if (grid != null && grid.Count > 0)
+        {
+            @foreach (var (y, row) in grid.Select((row, y) => (y, row)))
+            {
+                <div class="maze-row">
+                    @foreach (var (x, cell) in row.Select((cell, x) => (x, cell)))
+                    {
+                        @if (playerPos != null && playerPos.X == x && playerPos.Y == y)
+                        {
+                            <div class="maze-cell player" style="z-index: 10;">
+                                <span class="cell-content">🏃</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="maze-cell @BuildCellClasses(cell)">
+                                @if (!string.IsNullOrEmpty(cell))
+                                {
+                                    <span class="cell-content">@cell</span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public required Maze Maze { get; set; }
+
+    [Parameter]
+    public required Player Player { get; set; }
+
+    private List<List<string>> grid = new();
+    private Vec2d? playerPos = null;
+    private KeyboardEventArgs? lastKeyEvent = null;
+    private bool shouldQuit = false;
+
+    protected override void OnParametersSet()
+    {
+        grid.Clear();
+        for (int y = 0; y < Maze.Height; y++)
+        {
+            grid.Add(new List<string>());
+            for (int x = 0; x < Maze.Width; x++)
+            {
+                grid[y].Add("");
+            }
+        }
+
+        Maze.Draw(this);
+        Player.Draw(this);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(100);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (shouldQuit)
+            return;
+
+        var (movement, quit, pickup) = ParseKeyInput(e.Key);
+        
+        if (quit)
+        {
+            shouldQuit = true;
+            return;
+        }
+
+        if (pickup)
+        {
+            Player.Pickup();
+        }
+
+        if (movement.X != 0 || movement.Y != 0)
+        {
+            Player.TryMove(movement);
+            
+            grid.Clear();
+            for (int y = 0; y < Maze.Height; y++)
+            {
+                grid.Add(new List<string>());
+                for (int x = 0; x < Maze.Width; x++)
+                {
+                    grid[y].Add("");
+                }
+            }
+            
+            Maze.Draw(this);
+            Player.Draw(this);
+        }
+        
+        StateHasChanged();
+    }
+
+    (Vec2d movement, bool quit, bool pickup) IController.ReadInput()
+    {
+        if (lastKeyEvent == null)
+            return (new Vec2d(0, 0), false, false);
+
+        var result = ParseKeyInput(lastKeyEvent.Key);
+        lastKeyEvent = null;
+        return result;
+    }
+
+    private (Vec2d movement, bool quit, bool pickup) ParseKeyInput(string key)
+    {
+        var movement = new Vec2d(0, 0);
+        var quit = false;
+        var pickup = false;
+
+        var lowerKey = key.ToLower();
+
+        switch (lowerKey)
+        {
+            case "arrowup":
+            case "w":
+            case "z":
+                movement = new Vec2d(0, -1);
+                break;
+            
+            case "arrowdown":
+            case "s":
+                movement = new Vec2d(0, 1);
+                break;
+            
+            case "arrowleft":
+            case "q":
+            case "a":
+                movement = new Vec2d(-1, 0);
+                break;
+            
+            case "arrowright":
+            case "d":
+                movement = new Vec2d(1, 0);
+                break;
+            
+            case "e":
+                pickup = true;
+                break;
+            
+            case "escape":
+                quit = true;
+                break;
+        }
+
+        return (movement, quit, pickup);
+    }
+
+    void IGridDisplay.Draw()
+    {
+    }
+
+    void IGridDisplay.DrawMazeCell(int cx, int cy, Cell cell)
+    {
+        if (cy < grid.Count && cx < grid[cy].Count)
+        {
+            string content = GetCellContent(cell);
+            grid[cy][cx] = content;
+        }
+    }
+
+    void IGridDisplay.UpdateCell(int cx, int cy, Cell cell)
+    {
+        if (cell is Room room && room.IsStart)
+        {
+            playerPos = new Vec2d(cx, cy);
+        }
+        else
+        {
+            DrawMazeCell(cx, cy, cell);
+        }
+    }
+
+    private void DrawMazeCell(int cx, int cy, Cell cell)
+    {
+        if (cy < grid.Count && cx < grid[cy].Count)
+        {
+            grid[cy][cx] = GetCellContent(cell);
+        }
+    }
+
+    private string GetCellContent(Cell cell) =>
+        cell switch
+        {
+            Wall => "█",
+            Door => "🔓",
+            Room room when room.IsExit => "🚪",
+            Room room when room.IsStart => "·",
+            Room => "·",
+            _ => " "
+        };
+
+    private string BuildCellClasses(string content)
+    {
+        return GetCellClass(content);
+    }
+
+    private string GetCellClass(string content)
+    {
+        return content switch
+        {
+            "█" => "wall",
+            "·" => "room",
+            "$" => "coin",
+            "🔓" => "door",
+            "🔑" => "key",
+            "🏃" => "player",
+            "🚪" => "exit",
+            _ => "empty"
+        };
+    }
+}
