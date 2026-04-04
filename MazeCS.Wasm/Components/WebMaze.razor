@@ -1,8 +1,34 @@
 @using Epsi.MazeCs
+@implements IGridDisplay
 
 <div class="maze-container">
     <div class="maze-grid">
-        <p>Maze Component - Placeholder</p>
+        @if (grid != null && grid.Count > 0)
+        {
+            @foreach (var (y, row) in grid.Select((row, y) => (y, row)))
+            {
+                <div class="maze-row">
+                    @foreach (var (x, cell) in row.Select((cell, x) => (x, cell)))
+                    {
+                        @if (playerPos != null && playerPos.X == x && playerPos.Y == y)
+                        {
+                            <div class="maze-cell player" style="z-index: 10;">
+                                <span class="cell-content">🏃</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="maze-cell @BuildCellClasses(cell)">
+                                @if (!string.IsNullOrEmpty(cell))
+                                {
+                                    <span class="cell-content">@cell</span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        }
     </div>
 </div>
 
@@ -12,4 +38,87 @@
 
     [Parameter]
     public required Player Player { get; set; }
+
+    private List<List<string>> grid = new();
+    private Vec2d? playerPos = null;
+
+    protected override void OnParametersSet()
+    {
+        grid.Clear();
+        for (int y = 0; y < Maze.Height; y++)
+        {
+            grid.Add(new List<string>());
+            for (int x = 0; x < Maze.Width; x++)
+            {
+                grid[y].Add("");
+            }
+        }
+
+        Maze.Draw(this);
+        Player.Draw(this);
+    }
+
+    void IGridDisplay.Draw()
+    {
+    }
+
+    void IGridDisplay.DrawMazeCell(int cx, int cy, Cell cell)
+    {
+        if (cy < grid.Count && cx < grid[cy].Count)
+        {
+            string content = GetCellContent(cell);
+            grid[cy][cx] = content;
+        }
+    }
+
+    void IGridDisplay.UpdateCell(int cx, int cy, Cell cell)
+    {
+        if (cell is Room room && room.IsStart)
+        {
+            playerPos = new Vec2d(cx, cy);
+        }
+        else
+        {
+            DrawMazeCell(cx, cy, cell);
+        }
+    }
+
+    private void DrawMazeCell(int cx, int cy, Cell cell)
+    {
+        if (cy < grid.Count && cx < grid[cy].Count)
+        {
+            grid[cy][cx] = GetCellContent(cell);
+        }
+    }
+
+    private string GetCellContent(Cell cell) =>
+        cell switch
+        {
+            Wall => "█",
+            Door => "🔓",
+            Room room when room.IsExit => "🚪",
+            Room room when room.IsStart => "·",
+            Room => "·",
+            _ => " "
+        };
+
+    private string BuildCellClasses(string content)
+    {
+        return GetCellClass(content);
+    }
+
+    private string GetCellClass(string content)
+    {
+        return content switch
+        {
+            "█" => "wall",
+            "·" => "room",
+            "$" => "coin",
+            "🔓" => "door",
+            "🔑" => "key",
+            "🏃" => "player",
+            "🚪" => "exit",
+            _ => "empty"
+        };
+    }
 }

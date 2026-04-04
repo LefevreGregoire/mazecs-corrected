@@ -11,6 +11,7 @@ public class Player
     public Vec2d Position => position;
     public int Points => points;
     public IReadOnlyList<ICollectable> Inventory => inventory.AsReadOnly();
+    public const string PlayerSymbol = "🏃";
 
     // Events
     public event EventHandler<PointsChangedEventArgs>? PointsChanged;
@@ -99,6 +100,12 @@ public class Player
 
         // Clear the room's collectables
         room.Collectables.Clear();
+    }
+
+    public void Draw(IGridDisplay display)
+    {
+        var startRoom = new Room { IsStart = true };
+        display.UpdateCell(position.X, position.Y, startRoom);
     }
 
     private void Draw()
