@@ -1,7 +1,8 @@
 @using Epsi.MazeCs
 @implements IGridDisplay
+@implements IController
 
-<div class="maze-container">
+<div class="maze-container" @onkeydown="HandleKeyDown" tabindex="0">
     <div class="maze-grid">
         @if (grid != null && grid.Count > 0)
         {
@@ -41,6 +42,8 @@
 
     private List<List<string>> grid = new();
     private Vec2d? playerPos = null;
+    private KeyboardEventArgs? lastKeyEvent = null;
+    private bool shouldQuit = false;
 
     protected override void OnParametersSet()
     {
@@ -56,6 +59,107 @@
 
         Maze.Draw(this);
         Player.Draw(this);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(100);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (shouldQuit)
+            return;
+
+        var (movement, quit, pickup) = ParseKeyInput(e.Key);
+        
+        if (quit)
+        {
+            shouldQuit = true;
+            return;
+        }
+
+        if (pickup)
+        {
+            Player.Pickup();
+        }
+
+        if (movement.X != 0 || movement.Y != 0)
+        {
+            Player.TryMove(movement);
+            
+            grid.Clear();
+            for (int y = 0; y < Maze.Height; y++)
+            {
+                grid.Add(new List<string>());
+                for (int x = 0; x < Maze.Width; x++)
+                {
+                    grid[y].Add("");
+                }
+            }
+            
+            Maze.Draw(this);
+            Player.Draw(this);
+        }
+        
+        StateHasChanged();
+    }
+
+    (Vec2d movement, bool quit, bool pickup) IController.ReadInput()
+    {
+        if (lastKeyEvent == null)
+            return (new Vec2d(0, 0), false, false);
+
+        var result = ParseKeyInput(lastKeyEvent.Key);
+        lastKeyEvent = null;
+        return result;
+    }
+
+    private (Vec2d movement, bool quit, bool pickup) ParseKeyInput(string key)
+    {
+        var movement = new Vec2d(0, 0);
+        var quit = false;
+        var pickup = false;
+
+        var lowerKey = key.ToLower();
+
+        switch (lowerKey)
+        {
+            case "arrowup":
+            case "w":
+            case "z":
+                movement = new Vec2d(0, -1);
+                break;
+            
+            case "arrowdown":
+            case "s":
+                movement = new Vec2d(0, 1);
+                break;
+            
+            case "arrowleft":
+            case "q":
+            case "a":
+                movement = new Vec2d(-1, 0);
+                break;
+            
+            case "arrowright":
+            case "d":
+                movement = new Vec2d(1, 0);
+                break;
+            
+            case "e":
+                pickup = true;
+                break;
+            
+            case "escape":
+                quit = true;
+                break;
+        }
+
+        return (movement, quit, pickup);
     }
 
     void IGridDisplay.Draw()
